@@ -114,12 +114,14 @@ uint32_t adc1_Mean[12];
 uint32_t k=0,count=0, sd_Flag=0;
 uint32_t I1L,I2L,I3L,V1L,V2L,V3L,V12L,V23L,V13L,I12L,I23L,I13L,Ifb,Vfb;
 uint32_t bara_Arti,bara_Eksi,Vout,t_sample,akim,Iout,Vin,Iin,temp,bara_Toplam;
-int iMean=0, iV1L=0, iV2L=0, iV3L=0, iI1L=0, iI2L=0, iI3L=0, ibara_Arti=0, ibara_Eksi=0, iVout=0, itemp=0, iIout=0, iVin=0, iIin=0;
+int iMean=0 , iV1L = 0, iV2L = 0, iV3L = 0, iI1L = 0, iI2L = 0, iI3L = 0;
+int iVout = 0, itemp = 0,iIout = 0, iVin = 0, iIin = 0, iV12L = 0, iV23L = 0;
+int iV13L = 0, iI12L = 0, iI23L = 0, iI13L = 0, ibara_Toplam = 0;
 uint8_t RX_Data[4];
 uint8_t end_Command[3] = {0xFF, 0xFF, 0xFF};
 uint32_t dac_V=0, dac_I=0,send_V=0,send_I=0;
 char adc1_Last0[20], adc1_Last1[20], adc1_Last2[20], adc1_Last3[20], adc1_Last4[20], adc1_Last5[20];
-char adc1_Last6[20], adc1_Last7[20], adc1_Last8[20], adc1_Last9[20], adc1_Last1[20], adc1_Last10[20], adc1_Last11[20];
+char adc1_Last6[20], adc1_Last7[20], adc1_Last8[20], adc1_Last9[20], adc1_Last10[20];
 char nextion_Buffer[50];
 char buffer[100];
 
@@ -160,43 +162,43 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 		 if(RX_Data[1] == 0x31)
 		 {
-		 nextion_Send("n2", Vin);
-		 nextion_Send("n3", Iin);
+		 nextion_Send("n2", iVin);
+		 nextion_Send("n3", iIin);
 		 nextion_Send("n4", 666);
 		 nextion_Send("n5", 777);
 		 }
 
 		 else if(RX_Data[1] == 0x32)
 		 {
-		 nextion_Send("n6", Vout);
-		 nextion_Send("n7", Iout);
+		 nextion_Send("n6", iVout);
+		 nextion_Send("n7", iIout);
 		 nextion_Send("n8", 666);
 		 nextion_Send("n9", 777);
 		 }
 
 		 else if(RX_Data[1] == 0x33)
 		 {
-		 nextion_Send("n10", V1L);
-		 nextion_Send("n11", I1L);
-		 nextion_Send("n12", V2L);
-		 nextion_Send("n13", I2L);
-		 nextion_Send("n14", V3L);
-		 nextion_Send("n15", I3L);
+		 nextion_Send("n10", iV1L);
+		 nextion_Send("n11", iI1L);
+		 nextion_Send("n12", iV2L);
+		 nextion_Send("n13", iI2L);
+		 nextion_Send("n14", iV3L);
+		 nextion_Send("n15", iI3L);
 		 }
 
 		 else if(RX_Data[1] == 0x34)
 		 {
-		 nextion_Send("n16", V12L);
-		 nextion_Send("n17", I12L);
-		 nextion_Send("n18", V23L);
-		 nextion_Send("n19", I23L);
-		 nextion_Send("n20", V13L);
-		 nextion_Send("n21", I13L);
+		 nextion_Send("n16", iV12L);
+		 nextion_Send("n17", iI12L);
+		 nextion_Send("n18", iV23L);
+		 nextion_Send("n19", iI23L);
+		 nextion_Send("n20", iV13L);
+		 nextion_Send("n21", iI13L);
 		 }
 
 		 else if(RX_Data[1] == 0x35)
 		 {
-		 nextion_Send("n22", temp);
+		 nextion_Send("n22", itemp);
 		 }
 
 		 else
@@ -380,44 +382,41 @@ while(count<1600)
 
 
 				//Değerler int'e çevriliyor.
-				adc1_Mean[0]=(int)adc1_Mean[0];
-				V1L = (int)V1L;
-				V2L = (int)V2L;
-				V3L = (int)V3L;
-				I1L = (int)I1L;
-				I2L = (int)I2L;
-				I3L = (int)I3L;
-				bara_Arti = (int)bara_Arti;
-				bara_Eksi = (int)bara_Eksi;
-				Vout = (int)Vout;
-				temp = (int)temp;
-				Iout = (int)Iout;
-				Vin = (int)Vin;
-				Iin = (int)Iin;
-				V12L = (int)V12L;
-				V23L = (int)V23L;
-				V13L = (int)V13L;
-				I12L = (int)I12L;
-				I23L = (int)I23L;
-				I13L = (int)I13L;
-				bara_Toplam = (int)bara_Toplam;
+				iMean=(int)adc1_Mean[0];
+				iV1L = (int)V1L;
+				iV2L = (int)V2L;
+				iV3L = (int)V3L;
+				iI1L = (int)I1L;
+				iI2L = (int)I2L;
+				iI3L = (int)I3L;
+				iVout = (int)Vout;
+				itemp = (int)temp;
+				iIout = (int)Iout;
+				iVin = (int)Vin;
+				iIin = (int)Iin;
+				iV12L = (int)V12L;
+				iV23L = (int)V23L;
+				iV13L = (int)V13L;
+				iI12L = (int)I12L;
+				iI23L = (int)I23L;
+				iI13L = (int)I13L;
+				ibara_Toplam = (int)bara_Toplam;
 
 
 
 
 				//int değerler char'a çevriliyor
 				sprintf(adc1_Last0, "%d", 0); //geçen süre yazması gerekiyor.
-				sprintf(adc1_Last1, "%d", adc1_Mean[0]);
-				sprintf(adc1_Last2, "%d", V1L);
-				sprintf(adc1_Last3, "%d", V2L);
-				sprintf(adc1_Last4, "%d", V3L);
-				sprintf(adc1_Last5, "%d", I1L);
-				sprintf(adc1_Last6, "%d", I2L);
-				sprintf(adc1_Last7, "%d", I3L);
-				sprintf(adc1_Last8, "%d", bara_Toplam);
-				sprintf(adc1_Last9, "%d", Vout);
-				sprintf(adc1_Last10, "%d", Iout);
-				sprintf(adc1_Last11, "%d", temp);
+				sprintf(adc1_Last1, "%d", iV1L);
+				sprintf(adc1_Last2, "%d", iV2L);
+				sprintf(adc1_Last3, "%d", iV3L);
+				sprintf(adc1_Last4, "%d", iI1L);
+				sprintf(adc1_Last5, "%d", iI2L);
+				sprintf(adc1_Last6, "%d", iI3L);
+				sprintf(adc1_Last7, "%d", ibara_Toplam);
+				sprintf(adc1_Last8, "%d", iVout);
+				sprintf(adc1_Last9, "%d", iIout);
+				sprintf(adc1_Last10, "%d", itemp);
 
 
 
@@ -501,6 +500,7 @@ int main(void)
     /* USER CODE BEGIN 3 */
 	  if(sd_Flag==1)
 	  {
+		  	//SD karta yazdırma kısmı, sd_Flag 1 olduğunda SD Karta yazdırıyor.
 		    fres = f_mount(&fs, "", 0);
 			if (fres == FR_OK) {
 				transmit_uart("Micro SD card is mounted successfully!\n");
@@ -520,6 +520,7 @@ int main(void)
 
 			 //ADC değerlerinin char'a dönüştürülüp sd karta yazdırıldığı bölüm
 
+//				 f_puts("(s) VL1 VL2 VL3 IL1 IL2 IL3 VBARA VOUT IOUT TBARA \n", &fil);
 				 f_puts(adc1_Last0, &fil);   // ADC değerleri metin dosyasına yazdırıldı.
 				 f_puts(" ", &fil);
 				 f_puts(adc1_Last1, &fil);
@@ -541,8 +542,6 @@ int main(void)
 				 f_puts(adc1_Last9, &fil);
 				 f_puts(" ", &fil);
 				 f_puts(adc1_Last10, &fil);
-				 f_puts(" ", &fil);
-				 f_puts(adc1_Last11, &fil);
 				 f_puts("\n", &fil);
 
 
@@ -558,7 +557,8 @@ int main(void)
 			count=0;
 			k=0;
 
-		for(uint8_t y=0;y<12;y++)
+			// Alınan veriler sıfırlanıyor.
+			for(uint8_t y=0;y<12;y++)
 			{
 				adc_Buffer[y]=0;
 				adc1_Value[y]=0;
@@ -840,7 +840,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
