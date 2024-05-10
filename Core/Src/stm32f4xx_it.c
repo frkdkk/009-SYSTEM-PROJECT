@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 extern uint16_t Timer1, Timer2;
+volatile uint32_t millis = 0;
 
 extern DMA_HandleTypeDef hdma_spi1_tx;
 extern SPI_HandleTypeDef hspi1;
@@ -196,6 +197,8 @@ void SysTick_Handler(void)
 
 	if(Timer2 > 0)
 	   Timer2--;
+
+	millis++;
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */

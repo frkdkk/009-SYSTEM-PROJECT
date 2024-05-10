@@ -68,7 +68,8 @@ UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
-
+char message[128];
+uint32_t start_tick, end_tick;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -84,7 +85,16 @@ static void MX_USART3_UART_Init(void);
 static void MX_UART4_Init(void);
 static void MX_TIM8_Init(void);
 /* USER CODE BEGIN PFP */
-
+#ifdef __GNUC__
+    #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#else
+    #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#endif /* __GNUC__ */
+PUTCHAR_PROTOTYPE
+{
+    HAL_UART_Transmit(&huart4, (uint8_t *)&ch, 1, 1000);
+    return ch;
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -102,6 +112,7 @@ static void MX_TIM8_Init(void);
 	 *
 	 *Uint32_t ile int arası değiştirme yap.
 	 */
+
 
 
 int cont=118, sec1=0, sec8=0;;
@@ -124,6 +135,7 @@ char adc1_Last0[20], adc1_Last1[20], adc1_Last2[20], adc1_Last3[20], adc1_Last4[
 char adc1_Last6[20], adc1_Last7[20], adc1_Last8[20], adc1_Last9[20], adc1_Last10[20];
 char nextion_Buffer[50];
 char buffer[100];
+
 
 //SD karta yazmada kullanılan transmit_uart'ın fonskiyonu.
 void transmit_uart(char *string)
@@ -257,7 +269,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
-
+	start_tick = DWT->CYCCNT;
 
 while(count<1600)
 	{
@@ -430,6 +442,11 @@ while(count<1600)
 
 	sd_Flag=1;
 
+	end_tick = DWT->CYCCNT;
+	sprintf(message, "Time: %ld ms\r\n",(end_tick-start_tick)/(SystemCoreClock/1000000));
+	printf(message);
+
+
 
 }
 
@@ -459,12 +476,10 @@ int main(void)
 
   /* USER CODE BEGIN SysInit */
 
-  // Zaman ölçümü için DWT(Data Watch Point and Trace)
-  /*
+  // For measuring execution time
   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
   DWT->CYCCNT = 0;
   DWT->CTRL = DWT_CTRL_CYCCNTENA_Msk;
-  */
 
   /* USER CODE END SysInit */
 
@@ -481,7 +496,7 @@ int main(void)
   MX_UART4_Init();
   MX_TIM8_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_Base_Start_IT(&htim1);  // Örnekleme için timer kesmesi başlangıcı USER CODE 4'e git.
+  HAL_TIM_Base_Start_IT(&htim1); // Örnekleme için timer kesmesi başlangıcı USER CODE 4'e git.
   HAL_TIM_Base_Start_IT(&htim8);  // HMI Ekrana her 1s'de yazması için timer kesmesi başlangıcı
 
   HAL_DAC_Start(&hdac, DAC_CHANNEL_1);
@@ -553,7 +568,10 @@ int main(void)
 			} else if (fres != FR_OK) {
 				transmit_uart("The file was not closed.\n");}
 
-			sd_Flag=0;
+
+
+
+			    sd_Flag=0;
 			count=0;
 			k=0;
 
@@ -840,7 +858,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -1106,7 +1124,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)  /* TIMER CAGRILDI  
 {
 	 if(htim->Instance == TIM1)  // 50US'DE BIR KESMEYE GIRIP DEGER TOPLAYACAK.
 	 {
-		HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adc_Buffer, sizeof(adc_Buffer)); /* ADC1 BASLADI VE DEGERLER ADC1'DEN CEKILDI */
+		 HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adc_Buffer, sizeof(adc_Buffer)); /* ADC1 BASLADI VE DEGERLER ADC1'DEN CEKILDI */
 		 sec1++;
 	 }
 
