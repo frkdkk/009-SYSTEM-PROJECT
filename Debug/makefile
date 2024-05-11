@@ -65,7 +65,7 @@ main-build: 009_System_Project.elf secondary-outputs
 
 # Tool invocations
 009_System_Project.elf 009_System_Project.map: $(OBJS) $(USER_OBJS) D:\GitHub\009-SYSTEM-PROJECT\STM32F407VGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "009_System_Project.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\GitHub\009-SYSTEM-PROJECT\STM32F407VGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="009_System_Project.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+	arm-none-eabi-gcc -o "009_System_Project.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\GitHub\009-SYSTEM-PROJECT\STM32F407VGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="009_System_Project.map" -Wl,--gc-sections -static -u _printf_float -u _scanf_float --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

@@ -69,7 +69,7 @@ UART_HandleTypeDef huart3;
 
 /* USER CODE BEGIN PV */
 char message[128];
-uint32_t start_tick, end_tick;
+uint32_t start_tick, end_tick ;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -115,7 +115,7 @@ PUTCHAR_PROTOTYPE
 
 
 
-int cont=118, sec1=0, sec8=0;;
+int cont=118, sec1=0, sec8=0;
 uint32_t adc_Buffer[12];
 uint32_t adc1_Value[12];
 uint32_t adc1_Square[12];
@@ -269,7 +269,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
-	start_tick = DWT->CYCCNT;
+
 
 while(count<1600)
 	{
@@ -431,22 +431,11 @@ while(count<1600)
 				sprintf(adc1_Last10, "%d", itemp);
 
 
-
-
-
 		}
-
-
 
 	}
 
 	sd_Flag=1;
-
-	end_tick = DWT->CYCCNT;
-	sprintf(message, "Time: %ld ms\r\n",(end_tick-start_tick)/(SystemCoreClock/1000000));
-	printf(message);
-
-
 
 }
 
@@ -513,8 +502,12 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
 	  if(sd_Flag==1)
 	  {
+
+start_tick = DWT->CYCCNT;
+
 		  	//SD karta yazdırma kısmı, sd_Flag 1 olduğunda SD Karta yazdırıyor.
 		    fres = f_mount(&fs, "", 0);
 			if (fres == FR_OK) {
@@ -571,6 +564,8 @@ int main(void)
 
 
 
+
+
 			    sd_Flag=0;
 			count=0;
 			k=0;
@@ -586,7 +581,10 @@ int main(void)
 			}
 	  }
 
-
+end_tick = DWT->CYCCNT;
+sprintf(message, "Time: %9.2f ms\r\n", (float)(end_tick-start_tick)/(168000000/1000.0));
+printf(message);
+HAL_Delay(1000 - ((end_tick-start_tick))/(168000000/1000.0));
 
   }
   /* USER CODE END 3 */
