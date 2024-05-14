@@ -58,14 +58,17 @@ DMA_HandleTypeDef hdma_adc1;
 
 DAC_HandleTypeDef hdac;
 
+SD_HandleTypeDef hsd;
+
 SPI_HandleTypeDef hspi1;
 
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim8;
 
-UART_HandleTypeDef huart4;
+UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
+UART_HandleTypeDef huart6;
 
 /* USER CODE BEGIN PV */
 char message[128];
@@ -82,19 +85,21 @@ static void MX_USART2_UART_Init(void);
 static void MX_DAC_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USART3_UART_Init(void);
-static void MX_UART4_Init(void);
 static void MX_TIM8_Init(void);
+static void MX_SDIO_SD_Init(void);
+static void MX_USART1_UART_Init(void);
+static void MX_USART6_UART_Init(void);
 /* USER CODE BEGIN PFP */
 #ifdef __GNUC__
-    #define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
+#define PUTCHAR_PROTOTYPE int __io_putchar(int ch)
 #else
-    #define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
+#define PUTCHAR_PROTOTYPE int fputc(int ch, FILE *f)
 #endif /* __GNUC__ */
 PUTCHAR_PROTOTYPE
-{
-    HAL_UART_Transmit(&huart4, (uint8_t *)&ch, 1, 1000);
+	{
+    HAL_UART_Transmit(&huart1, (uint8_t *)&ch, 1, 1000);
     return ch;
-}
+	}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -106,16 +111,8 @@ PUTCHAR_PROTOTYPE
 	 *USART3 SD CARD LOGS
 	 *USART4 TIME SPEND
 	 *12-bit ADC, the digital output value will be between 0-4095.
-	 *�?u an 480 cycle dönüyor ve 4000000 örnek alıyor. Bunun örnek sayısını ve cycle sayısını düşür.
-	 *TIME IT diye bir fonksiyon var iki kod arasıdna geçen süreyi hesaplıyır.
-	 *Time sequence of adc, adc'nin bir çevrimde geçtiği süre
-	 *
-	 *Uint32_t ile int arası değiştirme yap.
 	 */
 
-
-
-int cont=118, sec1=0, sec8=0;
 uint32_t adc_Buffer[12];
 uint32_t adc1_Value[12];
 uint32_t adc1_Square[12];
@@ -128,6 +125,7 @@ uint32_t bara_Arti,bara_Eksi,Vout,t_sample,akim,Iout,Vin,Iin,temp,bara_Toplam;
 int iMean=0 , iV1L = 0, iV2L = 0, iV3L = 0, iI1L = 0, iI2L = 0, iI3L = 0;
 int iVout = 0, itemp = 0,iIout = 0, iVin = 0, iIin = 0, iV12L = 0, iV23L = 0;
 int iV13L = 0, iI12L = 0, iI23L = 0, iI13L = 0, ibara_Toplam = 0;
+int sec=0;
 uint8_t RX_Data[4];
 uint8_t end_Command[3] = {0xFF, 0xFF, 0xFF};
 uint32_t dac_V=0, dac_I=0,send_V=0,send_I=0;
@@ -141,7 +139,7 @@ char buffer[100];
 void transmit_uart(char *string)
 {
      uint8_t len = strlen(string);
-     HAL_UART_Transmit(&huart3, (uint8_t*) string, len, 200);
+     HAL_UART_Transmit_IT(&huart3, (uint8_t*) string , len);
 }
 
 
@@ -153,8 +151,8 @@ void nextion_Send(char *obj, uint32_t num ) //obj parametresine num değeri gön
 
 	uint8_t *nextion_Buffer = malloc(30*sizeof(char)); //buffer için bellek tahsis edilir.
 	int len = sprintf((char *)nextion_Buffer, "%s.val=%ld", obj, num); //nextion ekranına gönderilecek komut
-	HAL_UART_Transmit(&huart2, nextion_Buffer, len, 1000);
-	HAL_UART_Transmit(&huart2, end_Command, 3, 100);
+	HAL_UART_Transmit_IT(&huart2, nextion_Buffer, len);
+	HAL_UART_Transmit_IT(&huart2, end_Command, 3);
 	free(nextion_Buffer); //bellek serbest bırakılır.
 
 
@@ -418,7 +416,7 @@ while(count<1600)
 
 
 				//int değerler char'a çevriliyor
-				sprintf(adc1_Last0, "%d", 0); //geçen süre yazması gerekiyor.
+				sprintf(adc1_Last0, "%d", sec); //geçen süre timer 8 aracılığıyla yazılıyor.
 				sprintf(adc1_Last1, "%d", iV1L);
 				sprintf(adc1_Last2, "%d", iV2L);
 				sprintf(adc1_Last3, "%d", iV3L);
@@ -434,9 +432,7 @@ while(count<1600)
 		}
 
 	}
-
 	sd_Flag=1;
-
 }
 
 /* USER CODE END 0 */
@@ -465,7 +461,7 @@ int main(void)
 
   /* USER CODE BEGIN SysInit */
 
-  // For measuring execution time
+  // Zaman ölçümü kod kısmı
   CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
   DWT->CYCCNT = 0;
   DWT->CTRL = DWT_CTRL_CYCCNTENA_Msk;
@@ -482,8 +478,10 @@ int main(void)
   MX_SPI1_Init();
   MX_USART3_UART_Init();
   MX_FATFS_Init();
-  MX_UART4_Init();
   MX_TIM8_Init();
+  MX_SDIO_SD_Init();
+  MX_USART1_UART_Init();
+  MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim1); // Örnekleme için timer kesmesi başlangıcı USER CODE 4'e git.
   HAL_TIM_Base_Start_IT(&htim8);  // HMI Ekrana her 1s'de yazması için timer kesmesi başlangıcı
@@ -834,6 +832,34 @@ static void MX_DAC_Init(void)
 }
 
 /**
+  * @brief SDIO Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SDIO_SD_Init(void)
+{
+
+  /* USER CODE BEGIN SDIO_Init 0 */
+
+  /* USER CODE END SDIO_Init 0 */
+
+  /* USER CODE BEGIN SDIO_Init 1 */
+
+  /* USER CODE END SDIO_Init 1 */
+  hsd.Instance = SDIO;
+  hsd.Init.ClockEdge = SDIO_CLOCK_EDGE_RISING;
+  hsd.Init.ClockBypass = SDIO_CLOCK_BYPASS_DISABLE;
+  hsd.Init.ClockPowerSave = SDIO_CLOCK_POWER_SAVE_DISABLE;
+  hsd.Init.BusWide = SDIO_BUS_WIDE_4B;
+  hsd.Init.HardwareFlowControl = SDIO_HARDWARE_FLOW_CONTROL_DISABLE;
+  hsd.Init.ClockDiv = 0;
+  /* USER CODE BEGIN SDIO_Init 2 */
+
+  /* USER CODE END SDIO_Init 2 */
+
+}
+
+/**
   * @brief SPI1 Initialization Function
   * @param None
   * @retval None
@@ -964,35 +990,35 @@ static void MX_TIM8_Init(void)
 }
 
 /**
-  * @brief UART4 Initialization Function
+  * @brief USART1 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_UART4_Init(void)
+static void MX_USART1_UART_Init(void)
 {
 
-  /* USER CODE BEGIN UART4_Init 0 */
+  /* USER CODE BEGIN USART1_Init 0 */
 
-  /* USER CODE END UART4_Init 0 */
+  /* USER CODE END USART1_Init 0 */
 
-  /* USER CODE BEGIN UART4_Init 1 */
+  /* USER CODE BEGIN USART1_Init 1 */
 
-  /* USER CODE END UART4_Init 1 */
-  huart4.Instance = UART4;
-  huart4.Init.BaudRate = 9600;
-  huart4.Init.WordLength = UART_WORDLENGTH_8B;
-  huart4.Init.StopBits = UART_STOPBITS_1;
-  huart4.Init.Parity = UART_PARITY_NONE;
-  huart4.Init.Mode = UART_MODE_TX_RX;
-  huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart4.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart4) != HAL_OK)
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 9600;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN UART4_Init 2 */
+  /* USER CODE BEGIN USART1_Init 2 */
 
-  /* USER CODE END UART4_Init 2 */
+  /* USER CODE END USART1_Init 2 */
 
 }
 
@@ -1063,6 +1089,39 @@ static void MX_USART3_UART_Init(void)
 }
 
 /**
+  * @brief USART6 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART6_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART6_Init 0 */
+
+  /* USER CODE END USART6_Init 0 */
+
+  /* USER CODE BEGIN USART6_Init 1 */
+
+  /* USER CODE END USART6_Init 1 */
+  huart6.Instance = USART6;
+  huart6.Init.BaudRate = 9600;
+  huart6.Init.WordLength = UART_WORDLENGTH_8B;
+  huart6.Init.StopBits = UART_STOPBITS_1;
+  huart6.Init.Parity = UART_PARITY_NONE;
+  huart6.Init.Mode = UART_MODE_TX_RX;
+  huart6.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart6.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart6) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART6_Init 2 */
+
+  /* USER CODE END USART6_Init 2 */
+
+}
+
+/**
   * Enable DMA controller clock
   */
 static void MX_DMA_Init(void)
@@ -1123,7 +1182,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)  /* TIMER CAGRILDI  
 	 if(htim->Instance == TIM1)  // 50US'DE BIR KESMEYE GIRIP DEGER TOPLAYACAK.
 	 {
 		 HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adc_Buffer, sizeof(adc_Buffer)); /* ADC1 BASLADI VE DEGERLER ADC1'DEN CEKILDI */
-		 sec1++;
+
 	 }
 
 	 if(htim->Instance == TIM8) // 1s'de bir tft ekrana verileri gönderecek.
@@ -1131,7 +1190,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)  /* TIMER CAGRILDI  
 
 
 		 HAL_UART_Receive_IT(&huart2, RX_Data, 4);  //UART CallBack'e git ve basılan butona göre değer gönder ekrana.
-		 sec8++;
+		 sec++;
 
 	 }
 
