@@ -28,6 +28,8 @@
 #include "time.h"
 #include "math.h"
 #include "stdlib.h"
+#include "UartRingbuffer.h"
+#include "File_Handling.h"
 #define CT 50
 /* USER CODE END Includes */
 
